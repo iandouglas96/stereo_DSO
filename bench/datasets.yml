@@ -1,0 +1,27 @@
+%YAML 1.2
+---
+- vkitti:
+  calib: '/home/ian/Repos/stereo_DSO/calib/vkitti/Scene01.txt'  
+  gt: '/home/ian/Repos/stereo_DSO/groundTruthPose/dummy.txt'
+  root: '/media/ian/ResearchSSD/VKITTI'
+  sequences:
+    - 'Scene01/15-deg-left' 
+    - 'Scene01/15-deg-right' 
+    - 'Scene01/30-deg-left' 
+    - 'Scene01/30-deg-right' 
+    - 'Scene01/clone' 
+    - 'Scene01/fog' 
+    - 'Scene01/morning' 
+    - 'Scene01/overcast' 
+    - 'Scene01/rain' 
+    - 'Scene01/sunset' 
+    - 'Scene20/15-deg-left' 
+    - 'Scene20/15-deg-right' 
+    - 'Scene20/30-deg-left' 
+    - 'Scene20/30-deg-right' 
+    - 'Scene20/clone' 
+    - 'Scene20/fog' 
+    - 'Scene20/morning' 
+    - 'Scene20/overcast' 
+    - 'Scene20/rain' 
+    - 'Scene20/sunset' 

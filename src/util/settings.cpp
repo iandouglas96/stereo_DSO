@@ -189,7 +189,7 @@ bool disableReconfigure=false;
 bool debugSaveImages = false;
 bool multiThreading = true;
 bool disableAllDisplay = false;
-bool setting_onlyLogKFPoses = true;
+bool setting_onlyLogKFPoses = false;
 bool setting_logStuff = true;
 
 

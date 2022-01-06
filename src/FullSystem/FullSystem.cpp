@@ -163,7 +163,7 @@ FullSystem::FullSystem()
 	needNewKFAfter = -1;
 
 	linearizeOperation=true;
-	runMapping=true;
+	runMapping=false;
 	mappingThread = boost::thread(&FullSystem::mappingLoop, this);
 	lastRefStopID=0;
 
@@ -251,18 +251,22 @@ void FullSystem::printResult(std::string file)
 	myfile.open (file.c_str());
 	myfile << std::setprecision(15);
 
+  size_t ind = 0;
 	for(FrameShell* s : allFrameHistory)
 	{
 		if(!s->poseValid) continue;
 
 		if(setting_onlyLogKFPoses && s->marginalizedAt == s->id) continue;
 
-		myfile << s->timestamp <<
-			" " << s->camToWorld.translation().transpose()<<
+		myfile << ind <<
+			" " << s->camToWorld.translation()[0] <<
+			" " << s->camToWorld.translation()[1] <<
+			" " << s->camToWorld.translation()[2] <<
 			" " << s->camToWorld.so3().unit_quaternion().x()<<
 			" " << s->camToWorld.so3().unit_quaternion().y()<<
 			" " << s->camToWorld.so3().unit_quaternion().z()<<
-			" " << s->camToWorld.so3().unit_quaternion().w() << "\n";
+			" " << s->camToWorld.so3().unit_quaternion().w() << std::endl;
+    ind++;
 	}
 	myfile.close();
 }
@@ -1003,6 +1007,7 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 	boost::unique_lock<boost::mutex> lock(trackMutex);
 
 
+  coarseTimer.start();
 	// =========================== add into allFrameHistory =========================
 	FrameHessian* fh = new FrameHessian();
 	FrameHessian* fh_right = new FrameHessian();
@@ -1097,6 +1102,7 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 
 
 
+    coarseTimer.end();
 		lock.unlock();
 		deliverTrackedFrame(fh, fh_right, needToMakeKF);
 // 		LOG(INFO)<<"fh->worldToCam_evalPT: "<<allFrameHistory[allFrameHistory.size()-1]->camToWorld.translation().transpose();
@@ -1113,6 +1119,7 @@ void FullSystem::deliverTrackedFrame(FrameHessian* fh, FrameHessian* fh_right, b
 
 	if(linearizeOperation)
 	{
+    prerefineTimer.start();
 		if(goStepByStep && lastRefStopID != coarseTracker->refFrameID)
 		{
 			MinimalImageF3 img(wG[0], hG[0], fh->dI);
@@ -1126,25 +1133,33 @@ void FullSystem::deliverTrackedFrame(FrameHessian* fh, FrameHessian* fh_right, b
 			lastRefStopID = coarseTracker->refFrameID;
 		}
 		else handleKey( IOWrap::waitKey(1) );
+    prerefineTimer.end();
 
 
 
-		if(needKF) makeKeyFrame(fh,fh_right);
-		else makeNonKeyFrame(fh,fh_right);
+		if(needKF) {
+      newKeyTimer.start();
+      makeKeyFrame(fh,fh_right);
+      newKeyTimer.end();
+    } else {
+      refineKeyTimer.start();
+      makeNonKeyFrame(fh,fh_right);
+      refineKeyTimer.end();
+    }
 	}
 	else
 	{
-		boost::unique_lock<boost::mutex> lock(trackMapSyncMutex);
-		unmappedTrackedFrames.push_back(fh);
-		if(needKF) needNewKFAfter=fh->shell->trackingRef->id;
-		trackedFrameSignal.notify_all();
+		//boost::unique_lock<boost::mutex> lock(trackMapSyncMutex);
+		//unmappedTrackedFrames.push_back(fh);
+		//if(needKF) needNewKFAfter=fh->shell->trackingRef->id;
+		//trackedFrameSignal.notify_all();
 
-		while(coarseTracker_forNewKF->refFrameID == -1 && coarseTracker->refFrameID == -1 )
-		{
-			mappedFrameSignal.wait(lock);
-		}
+		//while(coarseTracker_forNewKF->refFrameID == -1 && coarseTracker->refFrameID == -1 )
+		//{
+		//	mappedFrameSignal.wait(lock);
+		//}
 
-		lock.unlock();
+		//lock.unlock();
 	}
 }
 
@@ -1738,6 +1753,16 @@ void FullSystem::printFrameLifetimes()
 	lg->close();
 	delete lg;
 
+}
+
+void FullSystem::printTimings() {
+  std::cout << "================= Timings =================" << std::endl;
+  std::cout << "Coarse: " << coarseTimer.avg()*1000 << "ms" << std::endl <<
+               "Prerefine: " << prerefineTimer.avg()*1000 << "ms" << std::endl <<
+               "Refine: " << refineKeyTimer.avg()*1000 << "ms" << std::endl <<
+               "New Key: " << newKeyTimer.avg()*1000 << "ms" << std::endl <<
+               "Num keyframes: " << newKeyTimer.count() << std::endl;
+  std::cout << "===========================================" << std::endl;
 }
 
 

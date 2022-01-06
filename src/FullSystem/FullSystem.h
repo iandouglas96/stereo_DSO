@@ -32,6 +32,7 @@
  
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include "util/NumType.h"
 #include "FullSystem/Residuals.h"
 #include "FullSystem/HessianBlocks.h"
@@ -149,6 +150,8 @@ public:
 	void debugPlot(std::string name);
 
 	void printFrameLifetimes();
+
+  void printTimings();
 	// contains pointers to active frames
 
     std::vector<IOWrap::Output3DWrapper*> outputWrapper;
@@ -295,6 +298,35 @@ private:
 	// mutex for camToWorl's in shells (these are always in a good configuration).
 	boost::mutex shellPoseMutex;
 
+  struct Timer {
+    double t = 0;
+    int n = 0;
+    std::chrono::time_point<std::chrono::system_clock> start_t;
+
+    void start() {
+      start_t = std::chrono::system_clock::now();
+    }
+
+    void end() {
+      auto end_t = std::chrono::system_clock::now();
+      std::chrono::duration<double> diff = end_t - start_t;
+      t += diff.count();
+      n++;
+    }
+
+    double avg() {
+      return t/n;
+    }
+
+    int count() {
+      return n;
+    }
+  };
+
+  Timer coarseTimer;
+  Timer prerefineTimer;
+  Timer refineKeyTimer;
+  Timer newKeyTimer;
 
 
 /*
