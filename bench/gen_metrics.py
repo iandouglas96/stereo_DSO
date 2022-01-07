@@ -12,6 +12,7 @@ class GenMetrics:
         self.errors_ = []
         self.datasets_ = []
         for file in files:
+            print(file.name)
             original_file = file.path
 
             # search for gt
@@ -46,7 +47,6 @@ class GenMetrics:
             ape_metric = metrics.APE(metrics.PoseRelation.translation_part)
             ape_metric.process_data((traj_ref, traj_est))
             ape_rmse = ape_metric.get_statistic(metrics.StatisticsType.rmse)
-            print(file.name)
             print(ape_rmse)
             self.datasets_.append(file.name)
             self.errors_.append(ape_rmse)
@@ -67,5 +67,5 @@ class GenMetrics:
         plt.show()
 
 if __name__ == '__main__':
-    gm = GenMetrics('benchmark_results/dsol')
+    gm = GenMetrics('benchmark_results/stereo_dso')
     gm.gen_cumulative_error_plot()

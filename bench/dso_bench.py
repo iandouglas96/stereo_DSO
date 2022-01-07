@@ -43,7 +43,9 @@ class StereoDsoRun(DsoRun):
         super().__init__()
         self.method_ = 'stereo_dso'
         self.dataset_ = dataset
-        self.cmd_ = ['/home/ian/Repos/stereo_DSO/build/bin/dso_dataset', 'files=' + dataset + '/frames/rgb', 'calib=' + dataset_calib, 'groundtruth=' + gt, 'mode=1', 'nogui=1', 'quiet=1', 'nolog=1', 'nomt=0']
+        if "vkitti" in dataset.lower():
+            dataset += '/frames/rgb'
+        self.cmd_ = ['/home/ian/Repos/stereo_DSO/build/bin/dso_dataset', 'files=' + dataset, 'calib=' + dataset_calib, 'groundtruth=' + gt, 'mode=1', 'nogui=1', 'quiet=1', 'nolog=1', 'nomt=0']
         if reverse:
             self.cmd_.append('reverse=1')
 
@@ -62,10 +64,10 @@ class DsoBench:
         for dataset in self.datasets_:
             for seq in dataset['sequences']:
                 full_path = dataset['root'] + '/' + seq
-                dr = DsolRun(full_path, dataset['calib'], dataset['gt'])
+                dr = StereoDsoRun(full_path, dataset['calib'], dataset['gt'])
                 dr.run()
-                #dr = DsolRun(full_path, dataset['calib'], dataset['gt'], True)
-                #dr.run()
+                dr = StereoDsoRun(full_path, dataset['calib'], dataset['gt'], True)
+                dr.run()
 
 if __name__ == '__main__':
     db = DsoBench()
