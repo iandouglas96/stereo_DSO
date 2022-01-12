@@ -7,9 +7,12 @@ from pathlib import Path
 import yaml
 
 class DsoRun:
-    def run(self, reverse=False):
+    def __init__(self, reverse):
+        self.reverse_ = reverse
+
+    def run(self):
         name = 'benchmark_results/' + self.method_ + '/' + self.dataset_.replace('/', '_')
-        if reverse:
+        if self.reverse_:
             name += '_rev'
 
         try:
@@ -40,18 +43,18 @@ class DsoRun:
 
 class StereoDsoRun(DsoRun):
     def __init__(self, dataset, dataset_calib, gt, reverse=False):
-        super().__init__()
+        super().__init__(reverse)
         self.method_ = 'stereo_dso'
         self.dataset_ = dataset
         if "vkitti" in dataset.lower():
             dataset += '/frames/rgb'
         self.cmd_ = ['/home/ian/Repos/stereo_DSO/build/bin/dso_dataset', 'files=' + dataset, 'calib=' + dataset_calib, 'groundtruth=' + gt, 'mode=1', 'nogui=1', 'quiet=1', 'nolog=1', 'nomt=0']
-        if reverse:
+        if self.reverse_:
             self.cmd_.append('reverse=1')
 
 class DsolRun(DsoRun):
     def __init__(self, dataset, dataset_calib, gt, reverse=False):
-        super().__init__()
+        super().__init__(reverse)
         self.method_ = 'dsol'
         self.dataset_ = dataset
         self.cmd_ = ['roslaunch', 'svcpp', 'dsol_data.launch', 'save:=' + str(Path.cwd()) + '/result.txt', 'base_dir:=' + dataset]

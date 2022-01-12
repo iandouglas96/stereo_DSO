@@ -18,7 +18,7 @@ class GenMetrics:
             # search for gt
             gt_filepath = ''
             for gt_file in os.scandir('ground_truth'):
-                if gt_file.name[:-4] in original_file:
+                if gt_file.name[:-4] in original_file and '_rev' not in gt_file.name:
                     gt_filepath = gt_file.path
                     break
             if gt_filepath == '':
@@ -28,14 +28,15 @@ class GenMetrics:
             # create mirror file if necessary
             if file.name[-7:] == 'rev.txt':
                 rev_gt_filepath = gt_filepath[:-4] + '_rev.txt'
-                original_gt = open(gt_filepath, 'r').readlines()
-                flipped_gt = []
-                for enum, pose in enumerate(reversed(original_gt)):
-                    pose_parsed = pose.split(' ')[1:]
-                    flipped_gt.append(' '.join([str(enum), *pose_parsed]))
-                rev_gt_file = open(rev_gt_filepath, 'w')
-                rev_gt_file.writelines(flipped_gt)
-                rev_gt_file.close()
+                if not os.path.exists(rev_gt_filepath):
+                    original_gt = open(gt_filepath, 'r').readlines()
+                    flipped_gt = []
+                    for enum, pose in enumerate(reversed(original_gt)):
+                        pose_parsed = pose.split(' ')[1:]
+                        flipped_gt.append(' '.join([str(enum), *pose_parsed]))
+                    rev_gt_file = open(rev_gt_filepath, 'w')
+                    rev_gt_file.writelines(flipped_gt)
+                    rev_gt_file.close()
                 gt_filepath = rev_gt_filepath
 
             traj_ref = file_interface.read_tum_trajectory_file(gt_filepath)
